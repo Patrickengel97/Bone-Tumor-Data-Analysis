@@ -1,0 +1,112 @@
+import sqlite3
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Connect to the SQLite database
+conn = sqlite3.connect("Bone_Tumor.db")
+
+# Load data into a Pandas DataFrame
+query = "SELECT * FROM PatientData"
+df = pd.read_sql_query(query, conn)
+
+# Display sample data from DataFrame
+print("Sample data:")
+print(df.head())
+
+# Get summary of DataFrame statistics
+summary = df.describe().round(2) # Round results to 2 decimal places
+print("\nSummary Statistics:")
+print(summary)
+
+# Identify and count missing values in DataFrame
+missing_values = df.isnull().sum()
+print("\nMissing values:")
+print(missing_values)
+
+# Treatment Analysis
+# Additional feature: Create a function and user input to prompt the user to select a treatment type and it will display
+# survival rates for that specific treatment type
+
+# Dictionary to map treatment abbreviations to full treatment types
+treatment_type_map = {
+    "RS": "Radiotherapy + Surgery",
+    "RSC": "Radiotherapy + Surgery + Chemotherapy",
+    "SC": "Surgery + Chemotherapy"
+}
+
+# Function to calculate and return survival rates for a specific treatment type
+def get_survival_rates(df, treatment_type):
+    # Filter the DataFrame for the specificed treatment
+    treatment_df = df[df['Treatment'] == treatment_type]
+    
+    # Group data for comparing survival rates and treatments
+    # Specifically, this calculates the survival rates as percentages for each unique status category within the specific
+    # treatment type
+    treatment_survival_rates = treatment_df.groupby('Status').size() / len(treatment_df) * 100
+    
+    return treatment_survival_rates
+
+# Prompt the user to enter a treatment type using abbreviations
+print("\nChoose a treatment type by entering the abbreviation:")
+print("RS - Radiotherapy + Surgery")
+print("RSC - Radiotherapy + Surgery Chemotherapy")
+print("SC - Surgery + Chemotherapy")
+user_input = input("Enter the abbreviation: ").strip().upper()
+
+# Check if the user input is valid and calculate the corresponding survival rates
+if user_input in treatment_type_map:
+    treatment_type = treatment_type_map[user_input]
+    survival_rates = get_survival_rates(df, treatment_type)
+
+    print(f"\nSurvival Rates for {treatment_type} (%):")
+    print(survival_rates)
+    
+     # Plot the survival rates
+    plt.figure(figsize = (10, 6))
+    survival_rates.plot(kind = 'bar', color = 'teal', edgecolor = 'black')
+    plt.title(f'Survival Rates for {treatment_type}')
+    plt.xlabel('Status')
+    plt.ylabel('Percentage')
+    plt.xticks(rotation = 0)  # Keep the x-axis labels horizontal
+    plt.tight_layout()
+    plt.show()
+else:
+    print("Invalid input. Please enter a valid abbreviation.")
+
+# Primary Tumor Site Analysis
+# Count the occurrences of primary tumor sites
+site_counts = df['SiteOfPrimarySTS'].value_counts()
+
+# Print the occurrences
+print("\nPrimary Tumor Site Distribution:")
+print(site_counts)
+
+# Bar chart to visualize the distribution of primary tumor sites
+plt.figure(figsize = (10, 6))
+site_counts.plot(kind = 'bar', color = 'pink', edgecolor = 'black')
+plt.title('Distribution of Primary Tumor Sites')
+plt.xlabel('Primary Tumor Site')
+plt.ylabel('Count')
+plt.xticks(rotation = 45, ha = 'right') # Rotate labels and align right
+plt.tight_layout()
+plt.savefig('distribution_of_primary_tumor_sites.png') # Save graph
+plt.show()
+
+# Types of cancers by sex
+# Group the data by 'HistologicalType' and 'Sex' columns and count the occurrences
+histological_gender_counts = df.groupby(['HistologicalType', 'Sex']).size().unstack(fill_value=0)
+
+print("\nTypes of Cancer by Gender:")
+print(histological_gender_counts)
+
+# Create a bar chart to visualize the histological types on the x-axis and counts on the y-axis
+plt.figure(figsize = (12, 6))
+histological_gender_counts.plot(kind = 'bar', stacked = True, colormap = 'viridis', edgecolor = 'black')
+plt.title('Histological Types by Gender')
+plt.xlabel('Histological Type')
+plt.ylabel('Count')
+plt.xticks(rotation = 45, ha = 'right')  # Rotate labels and align right
+plt.legend(title = 'Gender')
+plt.tight_layout()
+plt.savefig('cancers_by_sex.png') # Save graph
+plt.show()
