@@ -43,7 +43,7 @@ For more detailed information about each phase and the code used in this project
 ### Data Extraction and SQLite
 
 - Use knowledge of JSON, SQLite databases, and security to run a data modeling and cleaning process.
-- Extract necessary information from the retrieved JSON data and writing it to a SQLite database.
+- Extract necessary information from the retrieved JSON data and write it to a SQLite database.
 - Read rough/raw data from MongoDB downloads or a local JSON file.
 - Focus on extracting only the fields relevant to the planned data analysis task.
 - Wipe out and re-build the SQLite database each time the program runs, allowing adjustments to parameters and mapping tables.
@@ -59,5 +59,9 @@ For more detailed information about each phase and the code used in this project
 - Use appropriate methods to get a summary of the DataFrame and identify missing values.
 - Perform at least three different types of data analysis tasks on the dataset.
 - Create at least three different types of visualizations to support data analysis.
+
+## Additional Files
+- [Bone_Tumor.db]
+- [Analysis Report for Bone Tumors]
 
 Please access the code and documentation in this repository for more information on each phase of the project.
