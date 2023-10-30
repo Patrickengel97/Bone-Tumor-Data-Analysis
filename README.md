@@ -61,7 +61,7 @@ For more detailed information about each phase and the code used in this project
 - Create at least three different types of visualizations to support data analysis.
 
 ## Additional Files
-- [Bone_Tumor.db]
+- [Bone_Tumor.db](Bone_Tumor.db)
 - [Analysis Report for Bone Tumors]
 
 Please access the code and documentation in this repository for more information on each phase of the project.
