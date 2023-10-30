@@ -25,7 +25,6 @@ def write_data_mongodb_and_file(data_filename, uri, db_name, collection_name, js
                     # Insert each record into the MongoDB collection
                     inserted_record = collection.insert_one(record)
                     inserted_count += 1
-                    # Below is adapted from code got from GPT
                     record['_id'] = str(inserted_record.inserted_id)
                 else:
                     print(f"Skipping record {record['Patient ID']} due to missing data.")
