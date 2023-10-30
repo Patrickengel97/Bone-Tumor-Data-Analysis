@@ -62,6 +62,6 @@ For more detailed information about each phase and the code used in this project
 
 ## Additional Files
 - [Bone_Tumor.db](Bone_Tumor.db)
-- [Analysis Report for Bone Tumors](Analysis Report for Bone Tumors.pdf)
+- [Analysis Report for Bone Tumors](https://github.com/Patrickengel97/Bone-Tumor-Data-Analysis/blob/main/Analysis%20Report%20for%20Bone%20Tumors.pdf)
 
 Please access the code and documentation in this repository for more information on each phase of the project.
