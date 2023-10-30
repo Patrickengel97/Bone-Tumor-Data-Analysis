@@ -1,0 +1,55 @@
+import csv
+import json
+from pymongo import MongoClient
+
+# Function for writing data to MongoDB and a local JSON file
+def write_data_mongodb_and_file(data_filename, uri, db_name, collection_name, json_filename):
+    try:
+        # Initialize client
+        client = MongoClient(uri)
+    
+        # Access database
+        db = client[db_name]
+    
+        # Read data from the CSV file
+        with open(data_filename, 'r') as csv_file:
+            csv_reader = csv.DictReader(csv_file)
+            records = list(csv_reader)
+            inserted_count = 0
+        
+            # Insert data into a created collection
+            collection = db[collection_name] # Creates a collection
+            for record in records:
+                # Validate the data
+                if all(key in record for key in ["Patient ID", "Sex", "Age", "Grade", "Histological type", "MSKCC type", "Site of primary STS", "Status (NED, AWD, D)", "Treatment"]):
+                    # Insert each record into the MongoDB collection
+                    inserted_record = collection.insert_one(record)
+                    inserted_count += 1
+                    # Below is adapted from code got from GPT
+                    record['_id'] = str(inserted_record.inserted_id)  # Convert ObjectId to string, adapted from code got from ChatGPT
+                else:
+                    print(f"Skipping record {record['Patient ID']} due to missing data.")
+                
+        # Write all of the data to a local JSON file
+        with open(json_filename, 'w') as json_file:
+            json.dump(records, json_file, indent=4)
+        
+        # Print information to the user
+        print(f"Total records inserted into MongoDB: {inserted_count}")
+        print(f"Data written to {json_filename}")
+    
+    except FileNotFoundError as e:
+        print(f"File not found error: {e}")
+    except Exception as e:
+        print(f"An error occured: {e}")
+    
+if __name__ == "__main__":
+    # Define file and MongoDB parameters
+    data_filename = r"C:\Users\Patrick\Bone_Tumor_Dataset.csv"
+    uri = "mongodb+srv://patrickengel97:********@cluster0.bh35uda.mongodb.net/?retryWrites=true&w=majority&appName=AtlasApp"
+    db_name = "Cluster0"
+    collection_name = "BoneTumors"
+    json_filename = "Bone_Tumor_Dataset.txt"
+    
+    # Call the function to write data to MongoDB and a JSON file
+    write_data_mongodb_and_file(data_filename, uri, db_name, collection_name, json_filename)
