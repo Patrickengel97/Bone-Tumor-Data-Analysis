@@ -4,7 +4,7 @@ This project analyzes data related to bone tumors in different patients. The dat
 
 ## About the Bone Tumor Dataset
 
-The "Bone Tumor" dataset is sourced from the Memorial Sloan Kettering Cancer Center and contains information on bone tumors. It includes the following data fields:
+The "Bone Tumor" dataset includes the following data fields:
 
 - **Patient ID**: A unique identifier for each patient.
 - **Sex**: The patient's sex.
