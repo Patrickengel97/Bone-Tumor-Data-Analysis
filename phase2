@@ -1,0 +1,155 @@
+import sqlite3
+import logging
+from pymongo import MongoClient
+
+# Log errors when program doesn't execute successfully
+logging.basicConfig(filename = "data_log.log", level = logging.ERROR)
+
+# Function to read data from MongoDB
+def read_from_mongodb(uri, database_name, collection_name):
+    try:
+        client = MongoClient(uri)
+        db = client[database_name]
+        col = db[collection_name]
+        data = list(col.find())
+        return data
+    except Exception as e:
+        logging.error(f"Error while reading from MongoDB: {e}")
+        return []
+
+# Function to validate data fields and data types
+def data_validation(record):
+    try:
+        # Check for all required fields
+        if(
+            "Patient ID" in record
+            and "Sex" in record
+            and "Age" in record
+            and "Grade" in record
+            and "Histological type" in record
+            and "MSKCC type" in record
+            and "Site of primary STS" in record
+            and "Status (NED, AWD, D)" in record
+            and "Treatment" in record
+        ):
+            # Check data types and make sure data adheres to any rules
+            if (
+                isinstance(record["Patient ID"], str)
+                and isinstance(record["Sex"], str) and record["Sex"] in ["Male", "Female"] 
+                and isinstance(record["Age"], int) and record["Age"] >= 0
+                and isinstance(record["Grade"], str) and record["Grade"] in ["Intermediate", "High"]
+                and isinstance(record["Histological type"], str)
+                and isinstance(record["MSKCC type"], str)
+                and isinstance(record["Site of primary STS"], str)
+                and isinstance(record["Status (NED, AWD, D)"], str) and record["Status (NED, AWD, D)"] in ["NED", "AWD", "D"]
+                and isinstance(record["Treatment"], str)
+            ):
+                return True
+    except Exception as e:
+        logging.error(f"Data validation error: {e}")
+        return False
+
+# Function to create SQLite database and table
+def create_database():
+    try:
+        conn = sqlite3.connect("Bone_Tumor.db")
+        cur = conn.cursor()
+
+        # Define SQL table
+        create_table = '''
+            CREATE TABLE IF NOT EXISTS PatientData (
+                PatientID TEXT PRIMARY KEY,
+                Sex TEXT,
+                Age INT,
+                Grade TEXT,
+                HistologicalType TEXT,
+                MSKCCTYPE TEXT,
+                SiteOfPrimarySTS TEXT,
+                Status TEXT,
+                Treatment TEXT
+            );
+            '''
+        cur.execute(create_table)
+        conn.commit()
+    except Exception as e:
+        logging.error(f"Database creation error: {e}")
+    finally:
+        conn.close()
+    
+# Function for data transforming and cleaning
+def data_transform_and_clean(data):
+    try:
+        # Transform MongoDB data to match SQLite schema
+        cleaned_data = []
+        for record in data:
+            cleaned_record = {
+                "PatientID": record.get("Patient ID", ""),
+                "Sex": record.get("Sex", ""),
+                "Age": int(record.get("Age", 0)),
+                "Grade": record.get("Grade", ""),
+                "HistologicalType": record.get("Histological type", ""),
+                "MSKCCTYPE": record.get("MSKCC type", ""),
+                "SiteOfPrimarySTS": record.get("Site of primary STS",""),
+                "Status": record.get("Status (NED, AWD, D)", ""),
+                "Treatment": record.get("Treatment", ""),
+            }
+            cleaned_data.append(cleaned_record)
+        return cleaned_data
+    except Exception as e:
+        logging.error(f"Data transformation and cleaning error: {e}")
+    
+# Function to insert data into SQLite database
+def insert_into_sqlite(data, cur):
+    # Get the total number of records from the data
+    total_records = len(data)
+    
+    # Initialize a counter for the number of records successfully inserted
+    inserted_records = 0
+    
+    try:   
+        for record in data:
+           # Check if a record with the same PatientID already exists in the database
+            cur.execute("SELECT PatientID FROM PatientData WHERE PatientID = ?", (record["PatientID"],))
+            existing_record = cur.fetchone()
+            
+            # If there are no existing records, insert the current record
+            if existing_record is None:
+                cur.execute('''
+                    INSERT INTO PatientData (PatientID, Sex, Age, Grade, HistologicalType, MSKCCTYPE, SiteOfPrimarySTS, Status, Treatment)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''',
+                    (record["PatientID"], record["Sex"], record["Age"], record["Grade"], record["HistologicalType"], 
+                    record["MSKCCTYPE"], record["SiteOfPrimarySTS"], record["Status"], record["Treatment"]
+                ))
+                inserted_records += 1
+            else:
+                # Warning log for if a duplicate record is found and skip insertion
+                logging.warning(f"Skipping duplicate record with PatientID: {record['PatientID']}")
+        print(f"Total records: {total_records}")
+        print(f"Successfully inserted records: {inserted_records}")
+    except Exception as e:
+        logging.error(f"Insertion Error: {e}")
+
+if __name__ == "__main__":
+    # Define MongoDB parameters
+    uri = "mongodb+srv://patrickengel97:********@cluster0.bh35uda.mongodb.net/?retryWrites=true&w=majority&appName=AtlasApp"
+    database_name = "Cluster0"
+    collection_name = "BoneTumors"
+    
+    # Read MongoDB data
+    data = read_from_mongodb(uri, database_name, collection_name)
+    
+    # Create database
+    create_database()
+    
+    conn = sqlite3.connect("Bone_Tumor.db")
+    cur = conn.cursor()
+    
+    # Clean and transform data
+    cleaned_data = data_transform_and_clean(data)
+    
+    # Insert cleaned data into database
+    insert_into_sqlite(cleaned_data, cur)
+    
+    conn.commit()
+    conn.close()
